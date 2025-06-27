@@ -312,11 +312,11 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_halfword(std::uint32_t 
 td::InstructionDataThumb td::ThumbDisasm::dis_sp_rel_load_store(std::uint32_t pc, const std::uint16_t instr) const {
 	/*
 	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
-	|_1___0___0___0_|_L_|_____Rd____|___________Immediate___________|
+	|_1___0___0___1_|_L_|_____Rd____|___________Immediate___________|
 	*/
 	const bool is_load = (instr >> 11) & 0x1;              // Bit 11
 	const std::uint8_t dest_register = (instr >> 8) & 0x7; // Bit 10-8
-	const std::uint8_t immediate = instr & 0xFF;            // Bit 7-0
+	const std::uint8_t immediate = instr & 0xFF;           // Bit 7-0
 
 	std::string mnemonic = (is_load ? "LDR " : "STR ");
 	mnemonic += get_register_name(dest_register) + " ";
@@ -326,7 +326,20 @@ td::InstructionDataThumb td::ThumbDisasm::dis_sp_rel_load_store(std::uint32_t pc
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_address(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Load address unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___0___1___0_|_SP|_____Rd____|___________Immediate___________|
+	*/
+	const bool source = (instr >> 11) & 0x1;               // Bit 11
+	const std::uint8_t dest_register = (instr >> 8) & 0x7; // Bit 10-8
+	const std::uint8_t immediate = instr & 0xFF;           // Bit 7-0
+
+	std::string mnemonic = "ADD ";
+	mnemonic += get_register_name(dest_register) + " ";
+	mnemonic += (source ? "SP, " : "PC, ");
+	mnemonic += print_literal((std::uint16_t)immediate << 2);
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_add_off_to_sp(std::uint32_t pc, const std::uint16_t instr) const {
