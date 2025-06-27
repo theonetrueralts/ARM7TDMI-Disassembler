@@ -393,7 +393,7 @@ td::InstructionDataThumb td::ThumbDisasm::dis_cond_branch(std::uint32_t pc, cons
 	if (cond == 0xE) return { pc, instr, "Invalid instruction." };
 
 	std::string mnemonic = "B";
-	mnemonic += get_cond_suffix(cond) + ", ";
+	mnemonic += get_cond_suffix(cond) + " ";
 
 	std::int8_t signed_offset = static_cast<std::int8_t>(offset);
 	std::int8_t address = static_cast<std::int8_t>(signed_offset) << 1;
@@ -403,7 +403,16 @@ td::InstructionDataThumb td::ThumbDisasm::dis_cond_branch(std::uint32_t pc, cons
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_swi(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Software Interrupt unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___1___0___1___1___1___1___1_|____________Comment____________|
+	*/
+	const std::uint8_t comment = instr & 0xFF;     // Bit 7-0
+
+	std::string mnemonic = "SWI ";
+	mnemonic += print_literal(comment);
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_uncond_branch(std::uint32_t pc, const std::uint16_t instr) const {
