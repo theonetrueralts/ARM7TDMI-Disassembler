@@ -113,9 +113,9 @@ td::InstructionDataThumb td::ThumbDisasm::dis_mov_cmp_add_sub_imm(std::uint32_t 
 	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
 	|_0___0___1_|___Op__|_____Rd____|_____________Offset____________|
 	*/
-	const std::uint8_t opcode = (instr >> 11) & 0x3;      // Bit 12-11
-	const std::uint8_t target = (instr >> 8) & 0x7; // Bit 10-8
-	const std::uint8_t offset = instr & 0xFF;             // Bit 7-0
+	const std::uint8_t opcode = (instr >> 11) & 0x3; // Bit 12-11
+	const std::uint8_t target = (instr >> 8) & 0x7;  // Bit 10-8
+	const std::uint8_t offset = instr & 0xFF;        // Bit 7-0
 
 	std::string mnemonic;
 	switch (opcode) {
@@ -270,7 +270,26 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_sign_ext(std::uint32_t 
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_imm_off(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Load/store with immediate offset unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_0___1___0___1_|_H_|_S_|_1_|_____Ro____|_____Rb____|_____Rd____|
+	*/
+
+	const bool is_byte = (instr >> 12) & 0x1;              // Bit 12
+	const bool is_load = (instr >> 11) & 0x1;              // Bit 11
+	const std::uint8_t offset = (instr >> 6) & 0x1F;       // Bit 10-6
+	const std::uint8_t base_register = (instr >> 3) & 0x7; // Bit 5-3
+	const std::uint8_t target_register = instr & 0x7;      // Bit 2-0
+
+	std::string mnemonic = (is_load ? "LDR" : "STR" );
+	mnemonic += (is_byte ? "B " : " ");
+	mnemonic += get_register_name(target_register) + " ";
+	mnemonic += "[" + get_register_name(base_register) + ", ";
+	
+	if (is_byte) mnemonic += print_literal(offset) + "]";
+	else mnemonic += print_literal(offset << 2) + "]";
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_halfword(std::uint32_t pc, const std::uint16_t instr) const {
