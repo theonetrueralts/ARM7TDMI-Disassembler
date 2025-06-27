@@ -226,7 +226,23 @@ td::InstructionDataThumb td::ThumbDisasm::dis_pc_rel_load(std::uint32_t pc, cons
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_reg_off(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Load/store with register offset unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_0___1___0___1_|_L_|_B_|_0_|_____Ro____|_____Rb____|_____Rd____|
+	*/
+	const bool is_load = (instr >> 11) & 0x1;                // Bit 11
+	const bool is_byte = (instr >> 10) & 0x1;                // Bit 10
+	const std::uint8_t offset_register = (instr >> 6) & 0x7; // Bit 8-6
+	const std::uint8_t base_register = (instr >> 3) & 0x7;   // Bit 5-3
+	const std::uint8_t target_register = instr & 0x7;        // Bit 2-0
+
+	std::string mnemonic = (is_load ? "LDR" : "STR");
+	mnemonic += (is_byte ? "B " : " ");
+	mnemonic += get_register_name(target_register) + " ";
+	mnemonic += "[" + get_register_name(base_register) + ", ";
+	mnemonic += get_register_name(offset_register) + "]";
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_sign_ext(std::uint32_t pc, const std::uint16_t instr) const {
