@@ -23,8 +23,6 @@ namespace totr::Disassembler {
 		// Utility Methods
 		std::string print_literal(uint32_t v, bool prefix_hash = true) const;
 		
-		std::string get_cond_suffix(std::uint8_t cond) const;
-		
 		std::uint32_t rotr32(std::uint32_t value, std::uint32_t rot) const;
 		
 		std::string build_shift_op(const std::uint32_t instr) const;

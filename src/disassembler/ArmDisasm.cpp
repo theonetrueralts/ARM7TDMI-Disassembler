@@ -19,29 +19,6 @@ std::string td::ArmDisasm::print_literal(uint32_t v, bool prefix_hash) const {
 	return std::format("{}", v);
 }
 
-std::string td::ArmDisasm::get_cond_suffix(std::uint8_t cond) const {
-	cond &= 0xF;
-	switch (cond) {
-		case (0): return "EQ";
-		case (1): return "NE";
-		case (2): return "CS";
-		case (3): return "CC";
-		case (4): return "MI";
-		case (5): return "PL";
-		case (6): return "VS";
-		case (7): return "VC";
-		case (8): return "HI";
-		case (9): return "LS";
-		case (10): return "GE";
-		case (11): return "LT";
-		case (12): return "GT";
-		case (13): return "LE";
-		case (14): return "";   // AL ; Default
-		case (15): return "NV";
-	}
-	return "";
-}
-
 std::uint32_t td::ArmDisasm::rotr32(std::uint32_t value, std::uint32_t rot) const {
 	rot &= 31;
 	return (value >> rot) | (value << ((32 - rot) & 31));

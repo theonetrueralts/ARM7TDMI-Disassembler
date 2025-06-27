@@ -12,6 +12,29 @@ std::string totr::Disassembler::get_register_name(std::uint8_t reg, bool use_ali
 	return "R" + std::to_string(reg);
 }
 
+std::string totr::Disassembler::get_cond_suffix(std::uint8_t cond) {
+	cond &= 0xF;
+	switch (cond) {
+		case (0): return "EQ";
+		case (1): return "NE";
+		case (2): return "CS";
+		case (3): return "CC";
+		case (4): return "MI";
+		case (5): return "PL";
+		case (6): return "VS";
+		case (7): return "VC";
+		case (8): return "HI";
+		case (9): return "LS";
+		case (10): return "GE";
+		case (11): return "LT";
+		case (12): return "GT";
+		case (13): return "LE";
+		case (14): return "";   // AL ; Default
+		case (15): return "NV";
+	}
+	return "";
+}
+
 std::string totr::Disassembler::print_register_list(std::uint32_t register_list, int length) {
 	std::string mnemonic;
 
