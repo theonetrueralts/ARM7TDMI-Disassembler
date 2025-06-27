@@ -416,7 +416,19 @@ td::InstructionDataThumb td::ThumbDisasm::dis_swi(std::uint32_t pc, const std::u
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_uncond_branch(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Unconditional branch unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___1___1___0___0_|___________________Offset__________________|
+	*/
+	const std::uint16_t offset = instr & 0x7FF; // Bit 10-0
+
+	std::string mnemonic = "B ";
+
+	std::int16_t signed_offset = static_cast<std::int16_t>(offset << 5);
+	std::int32_t address = static_cast<std::int32_t>(signed_offset) >> 4;
+	mnemonic += print_literal(address + pc + 4);
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, const std::uint16_t instr) const {
