@@ -193,10 +193,8 @@ td::InstructionDataArm td::ArmDisasm::dis_branch(std::uint32_t pc, const std::ui
 	if (link) mnemonic += "L";
 	mnemonic += get_cond_suffix(cond) + " ";
 
-	std::int32_t address = std::bit_cast<std::int32_t>(std::uint32_t(offset) << 8) >> 6; // Sign extend and shift left 2
-	address += pc + 8;
-
-	mnemonic += print_literal(address);
+	std::int32_t address = static_cast<std::int32_t>(offset << 8) >> 6; // Sign extend and shift left 2
+	mnemonic += print_literal(address + pc + 8);
 
 	return { pc, instr, mnemonic };
 }
