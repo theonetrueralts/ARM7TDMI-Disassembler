@@ -1,4 +1,5 @@
 #include <totr/disassembler/ThumbDisasm.hpp>
+#include <totr/disassembler/Common.hpp>
 
 #include <format>
 
@@ -17,18 +18,6 @@ std::string td::ThumbDisasm::print_literal(uint32_t v, bool prefix_hash) const {
 	}
 	if (prefix_hash) return std::format("#{}", v);
 	return std::format("{}", v);
-}
-
-std::string td::ThumbDisasm::get_register_name(std::uint8_t reg, bool use_alias) const {
-	reg &= 0x0F;
-	if (use_alias) {
-		switch (reg) {
-			case (13): return "SP"; // R13 : Stack Pointer
-			case (14): return "LR"; // R14 : Link Register
-			case (15): return "PC"; // R15 : Program Counter
-		}
-	}
-	return "R" + std::to_string(reg);
 }
 
 /* ---  Format Dispatchers --- */

@@ -23,8 +23,6 @@ namespace totr::Disassembler {
 		// Utility Methods
 		std::string print_literal(uint32_t v, bool prefix_hash = true) const;
 
-		inline std::string get_register_name(std::uint8_t reg, bool use_alias = true) const;
-
 		// Format Dispatchers
 		InstructionDataThumb thumb_dispatcher(std::uint32_t pc, std::uint16_t instr) const;
 

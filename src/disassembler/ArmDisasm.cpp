@@ -1,4 +1,5 @@
 #include <totr/disassembler/ArmDisasm.hpp>
+#include <totr/disassembler/Common.hpp>
 
 #include <format>
 
@@ -39,18 +40,6 @@ std::string td::ArmDisasm::get_cond_suffix(std::uint8_t cond) const {
 		case (15): return "NV";
 	}
 	return "";
-}
-
-std::string td::ArmDisasm::get_register_name(std::uint8_t reg, bool use_alias) const {
-	reg &= 0x0F;
-	if (use_alias) {
-		switch (reg) {
-			case (13): return "SP"; // R13 : Stack Pointer
-			case (14): return "LR"; // R14 : Link Register
-			case (15): return "PC"; // R15 : Program Counter
-		}
-	}
-	return "R" + std::to_string(reg);
 }
 
 std::uint32_t td::ArmDisasm::rotr32(std::uint32_t value, std::uint32_t rot) const {
