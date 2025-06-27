@@ -310,7 +310,19 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_halfword(std::uint32_t 
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_sp_rel_load_store(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "SP-relative load/store unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___0___0___0_|_L_|_____Rd____|___________Immediate___________|
+	*/
+	const bool is_load = (instr >> 11) & 0x1;              // Bit 11
+	const std::uint8_t dest_register = (instr >> 8) & 0x7; // Bit 10-8
+	const std::uint8_t immediate = instr & 0xFF;            // Bit 7-0
+
+	std::string mnemonic = (is_load ? "LDR " : "STR ");
+	mnemonic += get_register_name(dest_register) + " ";
+	mnemonic += "[SP, " + print_literal((std::uint16_t)immediate << 2) + "]";
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_address(std::uint32_t pc, const std::uint16_t instr) const {
