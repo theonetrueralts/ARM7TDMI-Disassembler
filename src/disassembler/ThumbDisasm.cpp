@@ -292,7 +292,21 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_imm_off(std::uint32_t p
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_halfword(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Load/store halfword unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___0___0___0_|_L_|_______Offset______|_____Rb____|_____Rd____|
+	*/
+	const bool is_load = (instr >> 11) & 0x1;              // Bit 11
+	const std::uint8_t immediate = (instr >> 6) & 0x1F;    // Bit 10-6
+	const std::uint8_t base_register = (instr >> 3) & 0x7; // Bit 5-3
+	const std::uint8_t target_register = instr & 0x7;      // Bit 2-0
+	
+	std::string mnemonic = (is_load ? "LDRH " : "STRH ");
+	mnemonic += get_register_name(target_register) + " ";
+	mnemonic += "[" + get_register_name(base_register) + ", ";
+	mnemonic += print_literal(immediate << 1) + "]";
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_sp_rel_load_store(std::uint32_t pc, const std::uint16_t instr) const {
