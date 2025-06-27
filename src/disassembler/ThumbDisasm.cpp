@@ -231,14 +231,14 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_reg_off(std::uint32_t p
 	|_0___1___0___1_|_L_|_B_|_0_|_____Ro____|_____Rb____|_____Rd____|
 	*/
 	const bool is_load = (instr >> 11) & 0x1;                // Bit 11
-	const bool is_byte = (instr >> 10) & 0x1;                // Bit 10
+	const bool is_sign_extended = (instr >> 10) & 0x1;       // Bit 10
 	const std::uint8_t offset_register = (instr >> 6) & 0x7; // Bit 8-6
 	const std::uint8_t base_register = (instr >> 3) & 0x7;   // Bit 5-3
-	const std::uint8_t target_register = instr & 0x7;        // Bit 2-0
+	const std::uint8_t dest_register = instr & 0x7;          // Bit 2-0
 
 	std::string mnemonic = (is_load ? "LDR" : "STR");
-	mnemonic += (is_byte ? "B " : " ");
-	mnemonic += get_register_name(target_register) + " ";
+	mnemonic += (is_sign_extended ? "B " : " ");
+	mnemonic += get_register_name(dest_register) + " ";
 	mnemonic += "[" + get_register_name(base_register) + ", ";
 	mnemonic += get_register_name(offset_register) + "]";
 
@@ -246,7 +246,27 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_reg_off(std::uint32_t p
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_sign_ext(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Load/store sign-extended byte/halfword unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_0___1___0___1_|_H_|_S_|_1_|_____Ro____|_____Rb____|_____Rd____|
+	*/
+	const std::uint8_t hs = (instr >> 10) & 0x3;             // Bit 11-10
+	const std::uint8_t offset_register = (instr >> 6) & 0x7; // Bit 8-6
+	const std::uint8_t base_register = (instr >> 3) & 0x7;   // Bit 5-3
+	const std::uint8_t dest_register = instr & 0x7;          // Bit 2-0
+
+	std::string mnemonic;
+	switch (hs) {
+		case 0b00: mnemonic += "STRH "; break;
+		case 0b01: mnemonic += "LDRH "; break;
+		case 0b10: mnemonic += "LDSB "; break;
+		case 0b11: mnemonic += "LDSH "; break;
+	}
+	mnemonic += get_register_name(dest_register) + " ";
+	mnemonic += "[" + get_register_name(base_register) + ", ";
+	mnemonic += get_register_name(offset_register) + "]";
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_imm_off(std::uint32_t pc, const std::uint16_t instr) const {
