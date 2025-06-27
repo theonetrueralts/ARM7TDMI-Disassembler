@@ -11,7 +11,7 @@ td::InstructionDataThumb td::ThumbDisasm::decode(std::uint32_t pc, const std::ui
 
 /* --- Utility Methods --- */
 
-std::string td::ThumbDisasm::print_literal(uint32_t v, bool prefix_hash) const {
+std::string td::ThumbDisasm::print_literal(std::uint32_t v, bool prefix_hash) const {
 	if (m_print_literals_hex) {
 		if (prefix_hash) return std::format("#0x{:X}", v);
 		return std::format("0x{:X}", v);
@@ -383,7 +383,23 @@ td::InstructionDataThumb td::ThumbDisasm::dis_multi_load_store(std::uint32_t pc,
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_cond_branch(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Conditional branch unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___1___0___1_|______Cond_____|_____________Offset____________|
+	*/
+	const std::uint8_t cond = (instr >> 8) & 0xF; // Bit 10-8
+	const std::uint8_t offset = instr & 0xFF;     // Bit 7-0
+
+	if (cond == 0xE) return { pc, instr, "Invalid instruction." };
+
+	std::string mnemonic = "B";
+	mnemonic += get_cond_suffix(cond) + ", ";
+
+	std::int8_t signed_offset = static_cast<std::int8_t>(offset);
+	std::int8_t address = static_cast<std::int8_t>(signed_offset) << 1;
+	mnemonic += print_literal(address + pc + 4);
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_swi(std::uint32_t pc, const std::uint16_t instr) const {

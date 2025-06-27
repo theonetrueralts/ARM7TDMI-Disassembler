@@ -21,7 +21,7 @@ namespace totr::Disassembler {
 		bool m_print_literals_hex;
 
 		// Utility Methods
-		std::string print_literal(uint32_t v, bool prefix_hash = true) const;
+		std::string print_literal(std::uint32_t v, bool prefix_hash = true) const;
 
 		// Format Dispatchers
 		InstructionDataThumb thumb_dispatcher(std::uint32_t pc, std::uint16_t instr) const;
