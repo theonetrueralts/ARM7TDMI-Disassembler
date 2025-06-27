@@ -272,9 +272,8 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_store_sign_ext(std::uint32_t 
 td::InstructionDataThumb td::ThumbDisasm::dis_load_store_imm_off(std::uint32_t pc, const std::uint16_t instr) const {
 	/*
 	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
-	|_0___1___0___1_|_H_|_S_|_1_|_____Ro____|_____Rb____|_____Rd____|
+	|_0___1___1_|_B_|_L_|_______Offset______|_____Rb____|_____Rd____|
 	*/
-
 	const bool is_byte = (instr >> 12) & 0x1;              // Bit 12
 	const bool is_load = (instr >> 11) & 0x1;              // Bit 11
 	const std::uint8_t offset = (instr >> 6) & 0x1F;       // Bit 10-6
