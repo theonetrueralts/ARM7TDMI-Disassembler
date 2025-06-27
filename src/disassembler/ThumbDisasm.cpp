@@ -356,32 +356,7 @@ td::InstructionDataThumb td::ThumbDisasm::dis_push_pop_reg(std::uint32_t pc, con
 	const std::uint8_t register_list = instr & 0xFF; // Bit 7-0
 
 	std::string mnemonic = (is_load ? "PUSH {" : "POP {");
-
-	// Each of the 8 bits corresponds to a specific register by index. Eg. Bit 5=R5, Bit 0=R0, etc.
-	bool running = false;
-	std::uint8_t start = 0;
-	for (std::uint8_t r = 0; r < 8; r++) {
-		if ((register_list >> r) & 0x1) {
-			if (!running) {
-				running = true;
-				start = r;
-				mnemonic += get_register_name(start, false);
-			}
-			else {
-				if (r == 7) {
-					if (r - start == 2) mnemonic += ", " + get_register_name(r, false);
-					else if (r - start > 2) mnemonic += "-" + get_register_name(r, false);
-				}
-			}
-		}
-		else {
-			if (running) {
-				running = false;
-				if (r - start >= 2) mnemonic += "-" + get_register_name(r - 1, false);
-				if (register_list >> r) mnemonic += ", ";
-			}
-		}
-	}
+	mnemonic += print_register_list(register_list, 8);
 
 	if (store_lr) {
 		mnemonic += (is_load ? ", PC" : ", LR");
@@ -402,33 +377,7 @@ td::InstructionDataThumb td::ThumbDisasm::dis_multi_load_store(std::uint32_t pc,
 
 	std::string mnemonic = (is_load ? "LDMIA " : "STMIA ");
 	mnemonic += get_register_name(base_register) + "!, {";
-
-	// Each of the 8 bits corresponds to a specific register by index. Eg. Bit 5=R5, Bit 0=R0, etc.
-	bool running = false;
-	std::uint8_t start = 0;
-	for (std::uint8_t r = 0; r < 8; r++) {
-		if ((register_list >> r) & 0x1) {
-			if (!running) {
-				running = true;
-				start = r;
-				mnemonic += get_register_name(start, false);
-			}
-			else {
-				if (r == 7) {
-					if (r - start == 2) mnemonic += ", " + get_register_name(r, false);
-					else if (r - start > 2) mnemonic += "-" + get_register_name(r, false);
-				}
-			}
-		}
-		else {
-			if (running) {
-				running = false;
-				if (r - start >= 2) mnemonic += "-" + get_register_name(r - 1, false);
-				if (register_list >> r) mnemonic += ", ";
-			}
-		}
-	}
-	mnemonic += "}";
+	mnemonic += print_register_list(register_list, 8) + "}";
 
 	return { pc, instr, mnemonic };
 }

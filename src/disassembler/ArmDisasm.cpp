@@ -634,33 +634,7 @@ td::InstructionDataArm td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, con
 	mnemonic += get_register_name(base_register);
 	if (write_back) mnemonic += "!";
 
-	mnemonic += ", {";
-
-	// Each of the 16 bits corresponds to a specific register by index. Eg. Bit 15=R15, Bit 0=R0, etc.
-	bool running = false;
-	std::uint8_t start = 0;
-	for (std::uint8_t r = 0; r < 16; r++) {
-		if ((register_list >> r) & 0x1) {
-			if (!running) {
-				running = true;
-				start = r;
-				mnemonic += get_register_name(start, false);
-			} else {
-				if (r == 15) {
-					if (r - start == 2) mnemonic += ", " + get_register_name(r, false);
-					else if (r - start > 2) mnemonic += "-" + get_register_name(r, false);
-				}
-			}
-		} else {
-			if (running) {
-				running = false;
-				if (r - start >= 2) mnemonic += "-" + get_register_name(r-1, false);
-				if (register_list >> r) mnemonic += ", ";
-			}
-		}
-	}
-
-	mnemonic += "}";
+	mnemonic += ", {" + print_register_list(register_list, 16) + "}";
 	if (load_psr) mnemonic += "^";
 
 	return { pc, instr, mnemonic };

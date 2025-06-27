@@ -22,6 +22,7 @@ std::uint32_t read_word32_at(std::span<const std::uint8_t> rom, std::uint32_t pc
 
 int main() {
     bool decode_arm = false;
+    totr::Disassembler::ThumbDisasm d{ false };
 
     std::vector <std::uint8_t> opcodes;
 
@@ -65,18 +66,16 @@ int main() {
     }
 
     std::span<const uint8_t> rom{ opcodes };
-    totr::Disassembler::ThumbDisasm d{ false };
 
     std::cout << "  Addr   : Instr   : Mnemonic" << std::endl;
     std::cout << "--------------------------------" << std::endl;
 
     std::uint32_t instr = 0;
-    totr::Disassembler::InstructionDataThumb value;
-    for (int pc = 0; pc < rom.size(); pc += 2) {
+    for (int pc = 0; pc < rom.size(); pc += (decode_arm ? 4 : 2)) {
         if (decode_arm) instr = read_word32_at(rom, pc);
         else instr = read_word16_at(rom, pc);
 
-        value = d.decode(pc, instr);
+        auto value = d.decode(pc, instr);
 
         std::cout << std::format("#0x{:04X}", value.pc) << " : " << std::format("#0x{:04X}", value.instruction) << " : " << value.mnemonic << std::endl;
     }
