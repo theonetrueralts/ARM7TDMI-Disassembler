@@ -343,7 +343,18 @@ td::InstructionDataThumb td::ThumbDisasm::dis_load_address(std::uint32_t pc, con
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_add_off_to_sp(std::uint32_t pc, const std::uint16_t instr) const {
-	return { pc, instr, "Add offset to stack pointer unimplemented." };
+	/*
+	|_15|_14|_13|_12|_11|_10|_9_|_8_|_7_|_6_|_5_|_4_|_3_|_2_|_1_|_0_|
+	|_1___0___1___1___0___0___0___0_|_S_|_________Immediate_________|
+	*/
+	const bool sign = (instr >> 7) & 0x1;        // Bit 7
+	const std::uint8_t immediate = instr & 0x7F; // Bit 6-0
+
+	std::string mnemonic = "ADD SP, ";
+	mnemonic += (sign ? "#-" : "#");
+	mnemonic += print_literal((std::uint16_t)immediate << 2, false);
+
+	return { pc, instr, mnemonic };
 }
 
 td::InstructionDataThumb td::ThumbDisasm::dis_push_pop_reg(std::uint32_t pc, const std::uint16_t instr) const {
