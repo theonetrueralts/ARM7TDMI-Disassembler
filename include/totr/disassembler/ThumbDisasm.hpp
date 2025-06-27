@@ -20,7 +20,7 @@ namespace totr::Disassembler {
 		std::string print_literal(std::uint32_t v, bool prefix_hash = true) const;
 
 		// Format Dispatchers
-		InstructionData thumb_dispatcher(std::uint32_t pc, std::uint16_t instr) const;
+		InstructionData thumb_dispatcher(std::uint32_t pc, std::uint32_t instr) const;
 
 		// Format Decoders
 		InstructionData dis_move_shifted_reg(std::uint32_t pc, const std::uint16_t instr) const;
@@ -59,6 +59,6 @@ namespace totr::Disassembler {
 		
 		InstructionData dis_uncond_branch(std::uint32_t pc, const std::uint16_t instr) const;
 		
-		InstructionData dis_long_branch_link(std::uint32_t pc, const std::uint16_t instr) const;
+		InstructionData dis_long_branch_link(std::uint32_t pc, const std::uint32_t instr) const;
 	};
 } // totr::Disassembler

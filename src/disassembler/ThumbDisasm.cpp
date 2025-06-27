@@ -21,7 +21,7 @@ std::string td::ThumbDisasm::print_literal(std::uint32_t v, bool prefix_hash) co
 
 /* ---  Format Dispatchers --- */
 
-td::InstructionData td::ThumbDisasm::thumb_dispatcher(std::uint32_t pc, std::uint16_t instr) const {
+td::InstructionData td::ThumbDisasm::thumb_dispatcher(std::uint32_t pc, std::uint32_t instr) const {
 	std::uint8_t high_byte = instr >> 8;
 
 	// Ordered from most to least specific instruction set format masks.
@@ -430,6 +430,6 @@ td::InstructionData td::ThumbDisasm::dis_uncond_branch(std::uint32_t pc, const s
 	return { pc, instr, mnemonic, true, 2 };
 }
 
-td::InstructionData td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, const std::uint16_t instr) const {
+td::InstructionData td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, const std::uint32_t instr) const {
 	return { pc, instr, "Long branch with link unimplemented.", true, 2 };
 }
