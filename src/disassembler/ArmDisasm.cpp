@@ -1,11 +1,10 @@
 #include <totr/disassembler/ArmDisasm.hpp>
-#include <totr/disassembler/Common.hpp>
 
 #include <format>
 
 namespace td = totr::Disassembler;
 
-td::InstructionDataArm td::ArmDisasm::decode(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::decode(std::uint32_t pc, const std::uint32_t instr) const {
 	return dispatch_arm(pc, instr);
 }
 
@@ -87,7 +86,7 @@ std::string td::ArmDisasm::build_shift_op(const std::uint32_t instr) const {
 
 /* ---  Format Dispatchers --- */
 
-td::InstructionDataArm td::ArmDisasm::dispatch_arm(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dispatch_arm(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -128,21 +127,21 @@ td::InstructionDataArm td::ArmDisasm::dispatch_arm(std::uint32_t pc, const std::
 			return dispatch_data_proc_psr(pc, instr);
 		case 0b010:
 		case 0b011:
-			if (primary_type == 0b011 && (instr & 0x00000010) != 0) return { pc, instr, "Undefined." };
+			if (primary_type == 0b011 && (instr & 0x00000010) != 0) return { pc, instr, "Undefined.", true, 4 };
 			return dis_single_data_trans(pc, instr);
 		case 0b100: return dis_block_data_trans(pc, instr);
 		case 0b101: return dis_branch(pc, instr);
-		case 0b110: return { pc, instr, "Coprocessor Data Transfer unimplemented" };
+		case 0b110: return { pc, instr, "Coprocessor Data Transfer unimplemented", true, 4 };
 		case 0b111:
 			if ((instr & 0x01000000) != 0) return dis_swi(pc, instr);
-			if ((instr & 0x00000010) != 0) return { pc, instr, "Coprocessor Register Transfer unimplemented" };
-			return { pc, instr, "Coprocessor Data Operation unimplemented" };
+			if ((instr & 0x00000010) != 0) return { pc, instr, "Coprocessor Register Transfer unimplemented", true, 4 };
+			return { pc, instr, "Coprocessor Data Operation unimplemented", true, 4 };
 	}
 
-	return { pc, instr, "Invalid instruction." };
+	return { pc, instr, "Invalid instruction.", true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dispatch_data_proc_psr(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dispatch_data_proc_psr(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -163,7 +162,7 @@ td::InstructionDataArm td::ArmDisasm::dispatch_data_proc_psr(std::uint32_t pc, c
 
 /* --- Format Decoders --- */
 
-td::InstructionDataArm td::ArmDisasm::dis_branch_exchange(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_branch_exchange(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -176,10 +175,10 @@ td::InstructionDataArm td::ArmDisasm::dis_branch_exchange(std::uint32_t pc, cons
 	mnemonic += get_cond_suffix(cond) + " ";
 	mnemonic += get_register_name(op_register);
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_branch(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_branch(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -196,10 +195,10 @@ td::InstructionDataArm td::ArmDisasm::dis_branch(std::uint32_t pc, const std::ui
 	std::int32_t address = static_cast<std::int32_t>(offset << 8) >> 6; // Sign extend and shift left 2
 	mnemonic += print_literal(address + pc + 8);
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -264,10 +263,10 @@ td::InstructionDataArm td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std:
 		mnemonic += build_shift_op(instr);
 	}
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_psr_trans_MRS(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_psr_trans_MRS(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -282,10 +281,10 @@ td::InstructionDataArm td::ArmDisasm::dis_psr_trans_MRS(std::uint32_t pc, const 
 	mnemonic += get_register_name(dest_register) + ", ";
 	mnemonic += (source_psr ? "SPSR" : "CPSR");
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_psr_trans_MSR_reg(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_psr_trans_MSR_reg(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -300,10 +299,10 @@ td::InstructionDataArm td::ArmDisasm::dis_psr_trans_MSR_reg(std::uint32_t pc, co
 	mnemonic += std::string(dest_psr ? "SPSR" : "CPSR") + ", ";
 	mnemonic += get_register_name(src_register);
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_psr_trans_MSR_imm(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_psr_trans_MSR_imm(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -336,10 +335,10 @@ td::InstructionDataArm td::ArmDisasm::dis_psr_trans_MSR_imm(std::uint32_t pc, co
 		mnemonic += get_register_name(src_register);
 	}
 
-	return {pc, instr, mnemonic };
+	return {pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_mul_mla(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_mul_mla(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -361,10 +360,10 @@ td::InstructionDataArm td::ArmDisasm::dis_mul_mla(std::uint32_t pc, const std::u
 	mnemonic += get_register_name(op2_register);
 	if (accumulate) mnemonic += ", " + get_register_name(op1_register);
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_mul_mla_long (std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_mul_mla_long (std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -388,10 +387,10 @@ td::InstructionDataArm td::ArmDisasm::dis_mul_mla_long (std::uint32_t pc, const 
 	mnemonic += get_register_name(op2_register) + ", ";
 	mnemonic += get_register_name(op1_register);
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_single_data_trans(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_single_data_trans(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -471,10 +470,10 @@ td::InstructionDataArm td::ArmDisasm::dis_single_data_trans(std::uint32_t pc, co
 	}
 	mnemonic += address;
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -491,7 +490,7 @@ td::InstructionDataArm td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t 
 	const std::uint8_t offset_register = instr & 0xF;         // Bit 3-0
 
 	// SH=0b10 and SH=0b11 is only valid during load operations
-	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Unknown instruction" };
+	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction", true, 4 };
 
 	std::string mnemonic = (is_load ? "LDR" : "STR");
 	switch (sh) {
@@ -527,7 +526,7 @@ td::InstructionDataArm td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t 
 	return { pc, instr, mnemonic };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -546,7 +545,7 @@ td::InstructionDataArm td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t 
 	const std::uint8_t offset = (offset_high << 4) | offset_low;
 
 	// SH=0b10 and SH=0b11 is only valid during load operations
-	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction." };
+	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction.", true, 4 };
 
 	std::string mnemonic = (is_load ? "LDR" : "STR");
 	switch (sh) {
@@ -580,10 +579,10 @@ td::InstructionDataArm td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t 
 	}
 	mnemonic += address;
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -612,10 +611,10 @@ td::InstructionDataArm td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, con
 	mnemonic += ", {" + print_register_list(register_list, 16) + "}";
 	if (load_psr) mnemonic += "^";
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_single_data_swap(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_single_data_swap(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -634,10 +633,10 @@ td::InstructionDataArm td::ArmDisasm::dis_single_data_swap(std::uint32_t pc, con
 	mnemonic += get_register_name(source_register) + ", ";
 	mnemonic += "[" + get_register_name(base_register) + "]";
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
 
-td::InstructionDataArm td::ArmDisasm::dis_swi(std::uint32_t pc, const std::uint32_t instr) const {
+td::InstructionData td::ArmDisasm::dis_swi(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
@@ -650,5 +649,5 @@ td::InstructionDataArm td::ArmDisasm::dis_swi(std::uint32_t pc, const std::uint3
 	mnemonic += get_cond_suffix(cond) + " ";
 	mnemonic += print_literal(comment);
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, true, 4 };
 }
