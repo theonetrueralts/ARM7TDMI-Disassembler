@@ -1,6 +1,9 @@
-#include <totr/disassembler/ThumbDisasm.hpp>
-
 #include <format>
+#include <string>
+#include <cstdint>
+
+#include <totr/disassembler/ThumbDisasm.hpp>
+#include <totr/disassembler/Common.hpp>
 
 namespace td = totr::Disassembler;
 
