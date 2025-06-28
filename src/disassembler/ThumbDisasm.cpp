@@ -322,10 +322,11 @@ td::InstructionData td::ThumbDisasm::dis_load_address(std::uint32_t pc, const st
 	const std::uint8_t dest_register = (instr >> 8) & 0x7; // Bit 10-8
 	const std::uint8_t immediate = instr & 0xFF;           // Bit 7-0
 
-	std::string mnemonic = "ADD ";
-	mnemonic += get_register_name(dest_register) + " ";
-	mnemonic += (source ? "SP, " : "PC, ");
-	mnemonic += print_literal((std::uint16_t)immediate << 2);
+	std::string mnemonic;
+	if (source) mnemonic = "ADD " + get_register_name(dest_register) + ", SP, ";
+	else mnemonic = "ADR " + get_register_name(dest_register) + ", ";
+
+	mnemonic += print_literal(static_cast<std::uint16_t>(immediate) << 2);
 
 	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }

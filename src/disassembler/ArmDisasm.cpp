@@ -212,24 +212,36 @@ td::InstructionData td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::ui
 	const std::uint8_t op1_register = (instr >> 16) & 0xF;  // Bit 19-16
 	const std::uint8_t dest_register = (instr >> 12) & 0xF; // Bit 15-12
 
+	bool is_adr = is_immediate           // Must be immediate
+		&& (opcode == 2 || opcode == 4)  // SUB or ADD
+		&& op1_register == 15            // base = PC
+		&& !set_con                      // S-bit clear
+		&& dest_register != 15;          // Rd is not PC
+
 	std::string mnemonic;
-	switch (opcode) {
-		case (0): mnemonic += "AND"; break;
-		case (1): mnemonic += "EOR"; break;
-		case (2): mnemonic += "SUB"; break;
-		case (3): mnemonic += "RSB"; break;
-		case (4): mnemonic += "ADD"; break;
-		case (5): mnemonic += "ADC"; break;
-		case (6): mnemonic += "SBC"; break;
-		case (7): mnemonic += "RSC"; break;
-		case (8): mnemonic += "TST"; break;
-		case (9): mnemonic += "TEQ"; break;
-		case (10): mnemonic += "CMP"; break;
-		case (11): mnemonic += "CMN"; break;
-		case (12): mnemonic += "ORR"; break;
-		case (13): mnemonic += "MOV"; break;
-		case (14): mnemonic += "BIC"; break;
-		case (15): mnemonic += "MVN"; break;
+
+	if (is_adr) {
+		mnemonic += "ADR";
+	}
+	else {
+		switch (opcode) {
+			case (0): mnemonic += "AND"; break;
+			case (1): mnemonic += "EOR"; break;
+			case (2): mnemonic += "SUB"; break;
+			case (3): mnemonic += "RSB"; break;
+			case (4): mnemonic += "ADD"; break;
+			case (5): mnemonic += "ADC"; break;
+			case (6): mnemonic += "SBC"; break;
+			case (7): mnemonic += "RSC"; break;
+			case (8): mnemonic += "TST"; break;
+			case (9): mnemonic += "TEQ"; break;
+			case (10): mnemonic += "CMP"; break;
+			case (11): mnemonic += "CMN"; break;
+			case (12): mnemonic += "ORR"; break;
+			case (13): mnemonic += "MOV"; break;
+			case (14): mnemonic += "BIC"; break;
+			case (15): mnemonic += "MVN"; break;
+		}
 	}
 
 	mnemonic += get_cond_suffix(cond);
@@ -244,7 +256,7 @@ td::InstructionData td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::ui
 	if (opcode < 8 || opcode > 11)
 		mnemonic += get_register_name(dest_register) + ", ";
 
-	if (opcode != 13 && opcode != 15)
+	if ((opcode != 13 && opcode != 15) && !is_adr)
 		mnemonic += get_register_name(op1_register) + ", ";
 
 	// Operand 2
@@ -258,6 +270,11 @@ td::InstructionData td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::ui
 		const std::uint8_t immediate = instr & 0xFF;    // Bit 7-0
 
 		std::uint32_t literal = rotr32(immediate, rotate * 2);
+		if (is_adr) {
+			if (opcode == 4) literal = (pc + 8 + literal);
+			else literal = (pc + 8 - literal);
+		}
+
 		mnemonic += print_literal(literal);
 	}
 	else {
