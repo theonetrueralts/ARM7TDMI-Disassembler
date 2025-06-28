@@ -44,7 +44,7 @@ td::InstructionData td::ThumbDisasm::thumb_dispatcher(std::uint32_t pc, std::uin
 	else if ((high_byte & 0xE0) == 0x00) return dis_move_shifted_reg(pc, instr);
 	else if ((high_byte & 0xE0) == 0x20) return dis_mov_cmp_add_sub_imm(pc, instr);
 	else if ((high_byte & 0xE0) == 0x60) return dis_load_store_imm_off(pc, instr);
-	return { pc, instr, "Invalid instruction.", true, 2 };
+	return { pc, instr, "Invalid instruction.", true, 2, false, ModeEvent::None };
 }
 
 /* --- Format Decoders --- */
@@ -70,7 +70,7 @@ td::InstructionData td::ThumbDisasm::dis_move_shifted_reg(std::uint32_t pc, cons
 	mnemonic += get_register_name(src_register) + ", ";
 	mnemonic += print_literal(offset);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_add_sub(std::uint32_t pc, const std::uint16_t instr) const {
@@ -93,7 +93,7 @@ td::InstructionData td::ThumbDisasm::dis_add_sub(std::uint32_t pc, const std::ui
 	mnemonic += get_register_name(src_register) + ", ";
 	mnemonic += (is_imm ? print_literal(value) : get_register_name(value));
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_mov_cmp_add_sub_imm(std::uint32_t pc, const std::uint16_t instr) const {
@@ -115,7 +115,7 @@ td::InstructionData td::ThumbDisasm::dis_mov_cmp_add_sub_imm(std::uint32_t pc, c
 	mnemonic += get_register_name(target) + ", ";
 	mnemonic += print_literal(offset);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_alu_ops(std::uint32_t pc, const std::uint16_t instr) const {
@@ -149,7 +149,7 @@ td::InstructionData td::ThumbDisasm::dis_alu_ops(std::uint32_t pc, const std::ui
 	mnemonic += get_register_name(dest_register) + ", ";
 	mnemonic += get_register_name(src_register);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_hi_reg_ops_bx(std::uint32_t pc, const std::uint16_t instr) const {
@@ -184,7 +184,7 @@ td::InstructionData td::ThumbDisasm::dis_hi_reg_ops_bx(std::uint32_t pc, const s
 			if (high_op2) mnemonic += get_register_name(src_register + 8); // Registers 8-15
 			else mnemonic += get_register_name(src_register);              // Registers 0-7
 			
-			return { pc, instr, mnemonic, true, 2 };
+			return { pc, instr, mnemonic, true, 2, true, ModeEvent::BX };
 	}
 
 	if (high_op1) mnemonic += get_register_name(dest_register + 8) + ", "; // Registers 8-15
@@ -193,7 +193,7 @@ td::InstructionData td::ThumbDisasm::dis_hi_reg_ops_bx(std::uint32_t pc, const s
 	if (high_op2) mnemonic += get_register_name(src_register + 8); // Registers 8-15
 	else mnemonic += get_register_name(src_register);              // Registers 0-7
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2 , true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_pc_rel_load(std::uint32_t pc, const std::uint16_t instr) const {
@@ -210,7 +210,7 @@ td::InstructionData td::ThumbDisasm::dis_pc_rel_load(std::uint32_t pc, const std
 	mnemonic += print_literal((std::uint16_t)immediate << 2);
 	mnemonic += "]";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_load_store_reg_off(std::uint32_t pc, const std::uint16_t instr) const {
@@ -230,7 +230,7 @@ td::InstructionData td::ThumbDisasm::dis_load_store_reg_off(std::uint32_t pc, co
 	mnemonic += "[" + get_register_name(base_register) + ", ";
 	mnemonic += get_register_name(offset_register) + "]";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_load_store_sign_ext(std::uint32_t pc, const std::uint16_t instr) const {
@@ -254,7 +254,7 @@ td::InstructionData td::ThumbDisasm::dis_load_store_sign_ext(std::uint32_t pc, c
 	mnemonic += "[" + get_register_name(base_register) + ", ";
 	mnemonic += get_register_name(offset_register) + "]";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_load_store_imm_off(std::uint32_t pc, const std::uint16_t instr) const {
@@ -276,7 +276,7 @@ td::InstructionData td::ThumbDisasm::dis_load_store_imm_off(std::uint32_t pc, co
 	if (is_byte) mnemonic += print_literal(offset) + "]";
 	else mnemonic += print_literal(offset << 2) + "]";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_load_store_halfword(std::uint32_t pc, const std::uint16_t instr) const {
@@ -294,7 +294,7 @@ td::InstructionData td::ThumbDisasm::dis_load_store_halfword(std::uint32_t pc, c
 	mnemonic += "[" + get_register_name(base_register) + ", ";
 	mnemonic += print_literal(immediate << 1) + "]";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_sp_rel_load_store(std::uint32_t pc, const std::uint16_t instr) const {
@@ -310,7 +310,7 @@ td::InstructionData td::ThumbDisasm::dis_sp_rel_load_store(std::uint32_t pc, con
 	mnemonic += get_register_name(dest_register) + " ";
 	mnemonic += "[SP, " + print_literal((std::uint16_t)immediate << 2) + "]";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_load_address(std::uint32_t pc, const std::uint16_t instr) const {
@@ -327,7 +327,7 @@ td::InstructionData td::ThumbDisasm::dis_load_address(std::uint32_t pc, const st
 	mnemonic += (source ? "SP, " : "PC, ");
 	mnemonic += print_literal((std::uint16_t)immediate << 2);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_add_off_to_sp(std::uint32_t pc, const std::uint16_t instr) const {
@@ -342,7 +342,7 @@ td::InstructionData td::ThumbDisasm::dis_add_off_to_sp(std::uint32_t pc, const s
 	mnemonic += (sign ? "#-" : "#");
 	mnemonic += print_literal((std::uint16_t)immediate << 2, false);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_push_pop_reg(std::uint32_t pc, const std::uint16_t instr) const {
@@ -362,7 +362,7 @@ td::InstructionData td::ThumbDisasm::dis_push_pop_reg(std::uint32_t pc, const st
 	}
 	mnemonic += "}";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_multi_load_store(std::uint32_t pc, const std::uint16_t instr) const {
@@ -378,7 +378,7 @@ td::InstructionData td::ThumbDisasm::dis_multi_load_store(std::uint32_t pc, cons
 	mnemonic += get_register_name(base_register) + "!, {";
 	mnemonic += print_register_list(register_list, 8) + "}";
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_cond_branch(std::uint32_t pc, const std::uint16_t instr) const {
@@ -389,7 +389,7 @@ td::InstructionData td::ThumbDisasm::dis_cond_branch(std::uint32_t pc, const std
 	const std::uint8_t cond = (instr >> 8) & 0xF; // Bit 10-8
 	const std::uint8_t offset = instr & 0xFF;     // Bit 7-0
 
-	if (cond == 0xE) return { pc, instr, "Invalid instruction.", true, 2 };
+	if (cond == 0xE) return { pc, instr, "Invalid instruction.", true, 2, false, ModeEvent::None };
 
 	std::string mnemonic = "B";
 	mnemonic += get_cond_suffix(cond) + " ";
@@ -398,7 +398,7 @@ td::InstructionData td::ThumbDisasm::dis_cond_branch(std::uint32_t pc, const std
 	std::int8_t address = static_cast<std::int8_t>(signed_offset) << 1;
 	mnemonic += print_literal(address + pc + 4);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_swi(std::uint32_t pc, const std::uint16_t instr) const {
@@ -411,7 +411,7 @@ td::InstructionData td::ThumbDisasm::dis_swi(std::uint32_t pc, const std::uint16
 	std::string mnemonic = "SWI ";
 	mnemonic += print_literal(comment);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_uncond_branch(std::uint32_t pc, const std::uint16_t instr) const {
@@ -427,7 +427,7 @@ td::InstructionData td::ThumbDisasm::dis_uncond_branch(std::uint32_t pc, const s
 	std::int32_t address = static_cast<std::int32_t>(signed_offset) >> 4;
 	mnemonic += print_literal(address + pc + 4);
 
-	return { pc, instr, mnemonic, true, 2 };
+	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
 
 td::InstructionData td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, const std::uint32_t instr) const {
@@ -442,7 +442,7 @@ td::InstructionData td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, cons
 	const std::uint16_t high_offset = instr & 0x7FF;    // Bit 10-0
 
 	const uint8_t next_instr_sig = ((next_instr >> 11) & 0x1F); // Bit 15-11 in next instruction.
-	if (is_high_offset || next_instr_sig != 0x1F) return { pc, instr, "Invalid instruction.", true, 2 };
+	if (is_high_offset || next_instr_sig != 0x1F) return { pc, instr, "Invalid instruction.", true, 2, false, ModeEvent::None };
 
 	const uint16_t low_offset = next_instr & 0x7FF; // Bit 10-0 in next instruction.
 	std::int32_t address = static_cast<std::int32_t>((high_offset << 12) | (low_offset << 1));
@@ -450,5 +450,5 @@ td::InstructionData td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, cons
 
 	std::string mnemonic = "BL " + print_literal(address + pc + 4);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, true, 4, true, ModeEvent::None };
 }

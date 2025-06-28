@@ -3,12 +3,15 @@
 #include <cstdint>
 
 namespace totr::Disassembler {
+	enum class ModeEvent { None, BX, ExceptionReturn };
 	struct InstructionData {
 		std::uint32_t pc;
 		std::uint32_t instruction;
 		std::string mnemonic;
 		bool is_thumb;
-		int advance_by;
+		uint8_t size;
+		bool is_valid;
+		ModeEvent mode_event;
 	};
 
 	std::string get_register_name(std::uint8_t reg, bool use_alias = true);

@@ -1,4 +1,5 @@
 #include <totr/disassembler/ArmDisasm.hpp>
+#include <totr/disassembler/Common.hpp>
 
 #include <format>
 
@@ -127,18 +128,18 @@ td::InstructionData td::ArmDisasm::dispatch_arm(std::uint32_t pc, const std::uin
 			return dispatch_data_proc_psr(pc, instr);
 		case 0b010:
 		case 0b011:
-			if (primary_type == 0b011 && (instr & 0x00000010) != 0) return { pc, instr, "Undefined.", true, 4 };
+			if (primary_type == 0b011 && (instr & 0x00000010) != 0) return { pc, instr, "Undefined.", false, 4, true, ModeEvent::None };
 			return dis_single_data_trans(pc, instr);
 		case 0b100: return dis_block_data_trans(pc, instr);
 		case 0b101: return dis_branch(pc, instr);
-		case 0b110: return { pc, instr, "Coprocessor Data Transfer unimplemented", true, 4 };
+		case 0b110: return { pc, instr, "Coprocessor Data Transfer unimplemented", false, 4, true, ModeEvent::None };
 		case 0b111:
 			if ((instr & 0x01000000) != 0) return dis_swi(pc, instr);
-			if ((instr & 0x00000010) != 0) return { pc, instr, "Coprocessor Register Transfer unimplemented", true, 4 };
-			return { pc, instr, "Coprocessor Data Operation unimplemented", true, 4 };
+			if ((instr & 0x00000010) != 0) return { pc, instr, "Coprocessor Register Transfer unimplemented", false, 4, true, ModeEvent::None };
+			return { pc, instr, "Coprocessor Data Operation unimplemented", false, 4, true, ModeEvent::None };
 	}
 
-	return { pc, instr, "Invalid instruction.", true, 4 };
+	return { pc, instr, "Invalid instruction.", false, 4, false, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dispatch_data_proc_psr(std::uint32_t pc, const std::uint32_t instr) const {
@@ -175,7 +176,7 @@ td::InstructionData td::ArmDisasm::dis_branch_exchange(std::uint32_t pc, const s
 	mnemonic += get_cond_suffix(cond) + " ";
 	mnemonic += get_register_name(op_register);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::BX };
 }
 
 td::InstructionData td::ArmDisasm::dis_branch(std::uint32_t pc, const std::uint32_t instr) const {
@@ -195,14 +196,14 @@ td::InstructionData td::ArmDisasm::dis_branch(std::uint32_t pc, const std::uint3
 	std::int32_t address = static_cast<std::int32_t>(offset << 8) >> 6; // Sign extend and shift left 2
 	mnemonic += print_literal(address + pc + 8);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::uint32_t instr) const {
 	/*
 	|..3 ..................2 ..................1 ..................0|
 	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
-	|__Cond_|0 0|I|___op__|s|___Rn__|___Rd__|_______Operand 2_______|
+	|__Cond_|0 0|I|___op__|S|___Rn__|___Rd__|_______Operand 2_______|
 	*/
 	const std::uint8_t cond = (instr >> 28) & 0xF;          // Bit 31-28
 	const bool is_immediate = (instr >> 25) & 0x1;          // Bit 25
@@ -263,7 +264,11 @@ td::InstructionData td::ArmDisasm::dis_data_proc(std::uint32_t pc, const std::ui
 		mnemonic += build_shift_op(instr);
 	}
 
-	return { pc, instr, mnemonic, true, 4 };
+	ModeEvent event;
+	if (set_con && dest_register == 15)  event = ModeEvent::ExceptionReturn;
+	else event = ModeEvent::None;
+
+	return { pc, instr, mnemonic, false, 4, true, event };
 }
 
 td::InstructionData td::ArmDisasm::dis_psr_trans_MRS(std::uint32_t pc, const std::uint32_t instr) const {
@@ -281,7 +286,7 @@ td::InstructionData td::ArmDisasm::dis_psr_trans_MRS(std::uint32_t pc, const std
 	mnemonic += get_register_name(dest_register) + ", ";
 	mnemonic += (source_psr ? "SPSR" : "CPSR");
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_psr_trans_MSR_reg(std::uint32_t pc, const std::uint32_t instr) const {
@@ -299,7 +304,7 @@ td::InstructionData td::ArmDisasm::dis_psr_trans_MSR_reg(std::uint32_t pc, const
 	mnemonic += std::string(dest_psr ? "SPSR" : "CPSR") + ", ";
 	mnemonic += get_register_name(src_register);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_psr_trans_MSR_imm(std::uint32_t pc, const std::uint32_t instr) const {
@@ -335,7 +340,7 @@ td::InstructionData td::ArmDisasm::dis_psr_trans_MSR_imm(std::uint32_t pc, const
 		mnemonic += get_register_name(src_register);
 	}
 
-	return {pc, instr, mnemonic, true, 4 };
+	return {pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_mul_mla(std::uint32_t pc, const std::uint32_t instr) const {
@@ -360,7 +365,7 @@ td::InstructionData td::ArmDisasm::dis_mul_mla(std::uint32_t pc, const std::uint
 	mnemonic += get_register_name(op2_register);
 	if (accumulate) mnemonic += ", " + get_register_name(op1_register);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_mul_mla_long (std::uint32_t pc, const std::uint32_t instr) const {
@@ -387,7 +392,7 @@ td::InstructionData td::ArmDisasm::dis_mul_mla_long (std::uint32_t pc, const std
 	mnemonic += get_register_name(op2_register) + ", ";
 	mnemonic += get_register_name(op1_register);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_single_data_trans(std::uint32_t pc, const std::uint32_t instr) const {
@@ -470,7 +475,7 @@ td::InstructionData td::ArmDisasm::dis_single_data_trans(std::uint32_t pc, const
 	}
 	mnemonic += address;
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t pc, const std::uint32_t instr) const {
@@ -490,7 +495,7 @@ td::InstructionData td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t pc,
 	const std::uint8_t offset_register = instr & 0xF;         // Bit 3-0
 
 	// SH=0b10 and SH=0b11 is only valid during load operations
-	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction", true, 4 };
+	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction", false, 4, false, ModeEvent::None };
 
 	std::string mnemonic = (is_load ? "LDR" : "STR");
 	switch (sh) {
@@ -523,7 +528,7 @@ td::InstructionData td::ArmDisasm::dis_halfword_data_trans_reg(std::uint32_t pc,
 	}
 	mnemonic += address;
 
-	return { pc, instr, mnemonic };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t pc, const std::uint32_t instr) const {
@@ -545,7 +550,7 @@ td::InstructionData td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t pc,
 	const std::uint8_t offset = (offset_high << 4) | offset_low;
 
 	// SH=0b10 and SH=0b11 is only valid during load operations
-	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction.", true, 4 };
+	if (!is_load && (sh == 2 || sh == 3)) return { pc, instr, "Invalid instruction.", false, 4, false, ModeEvent::None };
 
 	std::string mnemonic = (is_load ? "LDR" : "STR");
 	switch (sh) {
@@ -579,7 +584,7 @@ td::InstructionData td::ArmDisasm::dis_halfword_data_trans_imm(std::uint32_t pc,
 	}
 	mnemonic += address;
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, const std::uint32_t instr) const {
@@ -611,7 +616,12 @@ td::InstructionData td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, const 
 	mnemonic += ", {" + print_register_list(register_list, 16) + "}";
 	if (load_psr) mnemonic += "^";
 
-	return { pc, instr, mnemonic, true, 4 };
+	ModeEvent event;
+	const bool restore_cpsr = (register_list >> 15) & 0x1; // Bit 15
+	if (is_load && load_psr && restore_cpsr)  event = ModeEvent::ExceptionReturn;
+	else event = ModeEvent::None;
+
+	return { pc, instr, mnemonic, false, 4, true, event };
 }
 
 td::InstructionData td::ArmDisasm::dis_single_data_swap(std::uint32_t pc, const std::uint32_t instr) const {
@@ -633,7 +643,7 @@ td::InstructionData td::ArmDisasm::dis_single_data_swap(std::uint32_t pc, const 
 	mnemonic += get_register_name(source_register) + ", ";
 	mnemonic += "[" + get_register_name(base_register) + "]";
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
 
 td::InstructionData td::ArmDisasm::dis_swi(std::uint32_t pc, const std::uint32_t instr) const {
@@ -649,5 +659,5 @@ td::InstructionData td::ArmDisasm::dis_swi(std::uint32_t pc, const std::uint32_t
 	mnemonic += get_cond_suffix(cond) + " ";
 	mnemonic += print_literal(comment);
 
-	return { pc, instr, mnemonic, true, 4 };
+	return { pc, instr, mnemonic, false, 4, true, ModeEvent::None };
 }
