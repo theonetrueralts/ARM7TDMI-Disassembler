@@ -1,7 +1,9 @@
+#include <format>
+#include <string>
+#include <cstdint>
+
 #include <totr/disassembler/ArmDisasm.hpp>
 #include <totr/disassembler/Common.hpp>
-
-#include <format>
 
 namespace td = totr::Disassembler;
 
