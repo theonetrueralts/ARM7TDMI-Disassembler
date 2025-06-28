@@ -184,7 +184,7 @@ td::InstructionData td::ThumbDisasm::dis_hi_reg_ops_bx(std::uint32_t pc, const s
 			if (high_op2) mnemonic += get_register_name(src_register + 8); // Registers 8-15
 			else mnemonic += get_register_name(src_register);              // Registers 0-7
 			
-			return { pc, instr, mnemonic };
+			return { pc, instr, mnemonic, true, 2 };
 	}
 
 	if (high_op1) mnemonic += get_register_name(dest_register + 8) + ", "; // Registers 8-15
@@ -431,5 +431,24 @@ td::InstructionData td::ThumbDisasm::dis_uncond_branch(std::uint32_t pc, const s
 }
 
 td::InstructionData td::ThumbDisasm::dis_long_branch_link(std::uint32_t pc, const std::uint32_t instr) const {
-	return { pc, instr, "Long branch with link unimplemented.", true, 2 };
+	/*
+	|..3 ..................2 ..................1 ..................0|
+	|1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
+	|_______Insruction at PC+2______|1 1 1 1|H|________Offset_______|
+	|____Offset-low half (H = 1)____|____Offset-high half (H = 0)___|
+	*/
+	const uint16_t next_instr = (instr >> 16) & 0xFFFF; // Bit 31-16
+	const bool is_high_offset = (instr >> 11) & 0x1;    // Bit 11
+	const std::uint16_t high_offset = instr & 0x7FF;    // Bit 10-0
+
+	const uint8_t next_instr_sig = ((next_instr >> 11) & 0x1F); // Bit 15-11 in next instruction.
+	if (is_high_offset || next_instr_sig != 0x1F) return { pc, instr, "Invalid instruction.", true, 2 };
+
+	const uint16_t low_offset = next_instr & 0x7FF; // Bit 10-0 in next instruction.
+	std::int32_t address = static_cast<std::int32_t>((high_offset << 12) | (low_offset << 1));
+	if (high_offset & 0x0400) address |= 0xFF800000; // Sign extend the address
+
+	std::string mnemonic = "BL " + print_literal(address + pc + 4);
+
+	return { pc, instr, mnemonic, true, 4 };
 }

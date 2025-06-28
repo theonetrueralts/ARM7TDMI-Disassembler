@@ -13,16 +13,18 @@ std::uint32_t read_word16_at(std::span<const std::uint8_t> rom, std::uint32_t pc
 }
 
 std::uint32_t read_word32_at(std::span<const std::uint8_t> rom, std::uint32_t pc) {
-    if (pc + 3 >= rom.size()) throw std::out_of_range("PC off ROM");
-    return std::uint32_t(rom[pc]) |
-        (std::uint32_t(rom[pc + 1]) << 8) |
+    if (pc + 3 >= rom.size()) {
+        return std::uint32_t(rom[pc]) | (std::uint32_t(rom[pc + 1]) << 8);
+    }
+    return std::uint32_t(rom[pc])          |
+        (std::uint32_t(rom[pc + 1]) << 8)  |
         (std::uint32_t(rom[pc + 2]) << 16) |
         (std::uint32_t(rom[pc + 3]) << 24);
 }
 
 int main() {
     bool decode_arm = false;
-    totr::Disassembler::ThumbDisasm d{ true };
+    totr::Disassembler::ThumbDisasm d{ false };
 
     std::vector <std::uint8_t> opcodes;
 
@@ -62,7 +64,8 @@ int main() {
             0xC2, 0x5D, 0x1C, 0x52, 0x7A, 0x56, 0xA3, 0x5E, 0x6A, 0x6F, 0x41, 0x73,
             0x0E, 0x87, 0xBC, 0x88, 0x7B, 0x94, 0x8F, 0xA2, 0x35, 0xAE, 0x43, 0xB0,
             0x9A, 0xB0, 0x1F, 0xB5, 0x44, 0xBD, 0xF8, 0xC0, 0x02, 0xDB, 0xFE, 0xDB,
-            0x02, 0xDE, 0x12, 0xDF, 0x02, 0xE0, 0xFE, 0xE7
+            0x02, 0xDE, 0x12, 0xDF, 0x02, 0xE0, 0xFE, 0xE7, 0x00, 0xF0, 0x6A, 0xF9,
+            0xFF, 0xF7, 0xF5, 0xFF
         };
     }
 
@@ -72,9 +75,9 @@ int main() {
     std::cout << "--------------------------------" << std::endl;
 
     std::uint32_t instr = 0;
-    for (int pc = 0; pc < rom.size(); pc += (decode_arm ? 4 : 2)) {
+    for (int pc = 0; pc < rom.size(); /* pc updated in loop */) {
         if (decode_arm) instr = read_word32_at(rom, pc);
-        else instr = read_word16_at(rom, pc);
+        else instr = read_word32_at(rom, pc);
 
         auto value = d.decode(pc, instr);
 
@@ -84,7 +87,11 @@ int main() {
         else std::cout << std::format("#0x{:04X}", value.instruction);
         
         std::cout << " : " << value.mnemonic << std::endl;
+
+        pc += value.advance_by;
     }
+
+    std::cout  << rom.size() << std::endl;
 
     return 0;
 }
