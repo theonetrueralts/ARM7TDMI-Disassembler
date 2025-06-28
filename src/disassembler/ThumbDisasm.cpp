@@ -326,7 +326,10 @@ td::InstructionData td::ThumbDisasm::dis_load_address(std::uint32_t pc, const st
 	if (source) mnemonic = "ADD " + get_register_name(dest_register) + ", SP, ";
 	else mnemonic = "ADR " + get_register_name(dest_register) + ", ";
 
-	mnemonic += print_literal(static_cast<std::uint16_t>(immediate) << 2);
+	std::uint32_t literal = static_cast<std::uint16_t>(immediate) << 2;
+	if (!source) literal += pc + 4;
+
+	mnemonic += print_literal(literal);
 
 	return { pc, instr, mnemonic, true, 2, true, ModeEvent::None };
 }
