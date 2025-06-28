@@ -1,3 +1,7 @@
+#include <string>
+#include <span>
+#include <cstdint>
+
 #include <totr/disassembler/Common.hpp>
 
 std::string totr::Disassembler::get_register_name(std::uint8_t reg, bool use_alias) {
@@ -65,4 +69,14 @@ std::string totr::Disassembler::print_register_list(std::uint32_t register_list,
 	}
 
 	return mnemonic;
+}
+
+std::uint32_t totr::Disassembler::read_word32_at(std::span<const std::uint8_t> rom, std::uint32_t pc) {
+	if (pc + 3 >= rom.size()) {
+		return std::uint32_t(rom[pc]) | (std::uint32_t(rom[pc + 1]) << 8);
+	}
+	return std::uint32_t(rom[pc]) |
+		(std::uint32_t(rom[pc + 1]) << 8) |
+		(std::uint32_t(rom[pc + 2]) << 16) |
+		(std::uint32_t(rom[pc + 3]) << 24);
 }
