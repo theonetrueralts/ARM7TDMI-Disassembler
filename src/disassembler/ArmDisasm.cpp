@@ -622,12 +622,15 @@ td::InstructionData td::ArmDisasm::dis_block_data_trans(std::uint32_t pc, const 
 	const std::uint16_t register_list = instr & 0xFFFF;     // Bit 15-0
 
 	std::string mnemonic = (is_load ? "LDM" : "STM");
-	switch ((pre_index << 1) | add_offset) {
+	
+	std::uint8_t mode = (static_cast<std::uint8_t>(pre_index) << 1) | static_cast<std::uint8_t>(add_offset);
+	switch (mode) {
 		case 0b00: mnemonic += "DA"; break; // Post-Decrement
 		case 0b01: break;              // IA ; Post - Increment; Default
 		case 0b10: mnemonic += "DB"; break; // Pre-Decrement
 		case 0b11: mnemonic += "IB"; break; // // Pre-Increment
 	}
+
 	mnemonic += get_cond_suffix(cond) + " ";
 	mnemonic += get_register_name(base_register);
 	if (write_back) mnemonic += "!";
