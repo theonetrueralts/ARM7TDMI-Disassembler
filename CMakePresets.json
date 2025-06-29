@@ -33,7 +33,8 @@
             "displayName": "x64 Release",
             "inherits": "x64-debug",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+              "CMAKE_BUILD_TYPE": "Release",
+              "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
             }
         },
         {
@@ -53,7 +54,8 @@
             "displayName": "x86 Release",
             "inherits": "x86-debug",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+              "CMAKE_BUILD_TYPE": "Release",
+              "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
             }
         },
         {
