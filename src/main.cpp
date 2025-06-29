@@ -46,9 +46,9 @@ void usage(const char* exe) {
         << "  -o, --out <file>       Write disassembly to <file> instead of stdout\n"
         << "  -d, --dec              Print immediates in decimal (default: hex)\n"
         << "\nExamples:\n"
-        << "  " << exe << " example.rom\n"
-        << "  " << exe << " example.rom --dec\n"
-        << "  " << exe << " example.rom -r overrides.txt -o dump.txt\n";
+        << "  " << exe << " demos/example/example.rom\n"
+        << "  " << exe << " demos/example/example.rom --dec\n"
+        << "  " << exe << " demos/example/example.rom -r demos/example/overrides.txt -o demos/example/dump.txt\n";
 }
 
 int main(int argc, char* argv[]) {

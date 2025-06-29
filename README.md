@@ -37,9 +37,9 @@ Options:
   -o, --out <file>       Write disassembly to <file> instead of stdout
   -d, --dec              Print immediates in decimal (default: hex)
 Examples:
-  Disassembler.exe example.rom
-  Disassembler.exe example.rom --dec
-  Disassembler.exe example.rom -r overrides.txt -o dump.txt
+  Disassembler.exe demos/example/example.rom
+  Disassembler.exe demos/example/example.rom --dec
+  Disassembler.exe demos/example/example.rom -r demos/example/overrides.txt -o demos/example/dump.txt
 ```
 
 ## Limitations
