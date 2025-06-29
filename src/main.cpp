@@ -88,12 +88,20 @@ int main(int argc, char* argv[]) {
             std::cerr << "Cannot write to " << *out_path << "\n";
             return 2;
         }
+        std::cout << "Writing to: " << *out_path << "\n";
         out = &outfile;
     }
 
-    auto opcodes = td::load_rom(rom_path.string());
+    std::vector<std::uint8_t> opcodes;
     std::unordered_map<std::uint32_t, td::ArmMode> mode_override_table;
-    if (override_path) mode_override_table = td::load_overrides(override_path->string());
+    try {
+        opcodes = td::load_rom(rom_path.string());
+        if (override_path) mode_override_table = td::load_overrides(override_path->string());
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << '\n';
+        return 3;
+    }
 
     // Main loop
     std::span<const uint8_t> rom{ opcodes };
