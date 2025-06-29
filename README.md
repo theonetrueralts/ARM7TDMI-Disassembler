@@ -1,4 +1,4 @@
-# ARM7TDMI-Decoder
+# ARM7TDMI-Disassembler
 
 Stateless ARM v4T disassembler aimed at the little-endian memory space that Game Boy Advance ROMs use.
 
