@@ -108,10 +108,10 @@ int main(int argc, char* argv[]) {
     td::ArmDisasm d_arm{ print_literals_hex };
     td::ThumbDisasm d_thumb{ print_literals_hex };
 
-    int pc = 0;
+    std::uint32_t pc = 0;
     td::ArmMode mode = td::ArmMode::ARM;
     bool did_mode_override = false;
-    bool mode_switched = false;mode_switched = false;
+    bool mode_switched = false;
     bool ambiguous = false;
 
     std::uint32_t instr = 0;
