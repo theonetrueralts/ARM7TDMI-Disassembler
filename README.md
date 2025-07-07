@@ -2,7 +2,7 @@
 
 Stateless ARM v4T disassembler aimed at the little-endian memory space that Game Boy Advance ROMs use.
 
-**Decodes both ARM and THUMB** instructions, auto-detects mode boundaries, and outputs human-readable assembly.
+Decodes both ARM and THUMB instructions, auto-detects mode boundaries, and outputs human-readable assembly.
 
 [![license](https://img.shields.io/github/license/theonetrueralts/ARM7TDMI-Disassembler)](LICENSE)
 
@@ -14,7 +14,7 @@ Stateless ARM v4T disassembler aimed at the little-endian memory space that Game
 ## Quick-start (CMake)
 `CMakePresets.json` defaults to the **Ninja** generator.
 
-If Ninja isn’t on your PATH, either install it (winget install Ninja-build.Ninja) or open an x64 Native Tools Command Prompt for VS 2022.
+If Ninja isnâ€™t on your PATH, either install it (winget install Ninja-build.Ninja) or open an x64 Native Tools Command Prompt for VS 2022.
 
 If you prefer another tool, create a `CMakeUserPresets.json` that overrides the generator, then call it with `cmake --preset <your-preset>`.
 
@@ -49,4 +49,4 @@ Examples:
 
 ## License
 
-MIT © 2025 theonetrueralts
+MIT Â© 2025 theonetrueralts
